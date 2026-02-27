@@ -1,0 +1,7 @@
+{
+  "name": "Maskuna (مسكُنا)",
+  "description": "A comprehensive Islamic companion app featuring prayer times, Holy Quran, Tasbeeh, and Athkar with a modern spiritual design.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
