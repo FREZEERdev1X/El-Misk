@@ -37,10 +37,10 @@ type Tab = 'prayer' | 'quran' | 'tasbeeh' | 'athkar' | 'qibla' | 'settings';
 export default function App() {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('prayer');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [calcMethod, setCalcMethod] = useState<CalculationMethodType>('Egyptian');
-  const [adhanEnabled, setAdhanEnabled] = useState(true);
-  const [selectedAdhan, setSelectedAdhan] = useState('makkah');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
+  const [calcMethod, setCalcMethod] = useState<CalculationMethodType>(() => (localStorage.getItem('calcMethod') as CalculationMethodType) || 'Egyptian');
+  const [adhanEnabled, setAdhanEnabled] = useState(() => localStorage.getItem('adhanEnabled') !== 'false');
+  const [selectedAdhan, setSelectedAdhan] = useState(() => localStorage.getItem('selectedAdhan') || 'makkah');
   const [isManualLocation, setIsManualLocation] = useState(() => localStorage.getItem('isManualLocation') === 'true');
   const [manualLocation, setManualLocation] = useState<{ latitude: number, longitude: number, city: string } | null>(() => {
     const saved = localStorage.getItem('manualLocation');
@@ -81,6 +81,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('calcMethod', calcMethod);
+  }, [calcMethod]);
+
+  useEffect(() => {
+    localStorage.setItem('adhanEnabled', adhanEnabled.toString());
+  }, [adhanEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('selectedAdhan', selectedAdhan);
+  }, [selectedAdhan]);
+
+  useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [isRTL, theme]);
@@ -115,7 +131,9 @@ export default function App() {
   }, [currentTime, adhanEnabled, prayerTimes, lastAdhanPlayed]);
 
   const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+    const newLang = i18n.language === 'ar' ? 'en' : 'ar';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('i18nextLng', newLang);
   };
 
   const toggleTheme = () => {

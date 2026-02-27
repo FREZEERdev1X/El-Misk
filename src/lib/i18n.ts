@@ -108,7 +108,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'ar', // Default to Arabic as requested
+    lng: localStorage.getItem('i18nextLng') || 'ar',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
