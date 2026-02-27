@@ -41,9 +41,17 @@ export default function App() {
   const [calcMethod, setCalcMethod] = useState<CalculationMethodType>('Egyptian');
   const [adhanEnabled, setAdhanEnabled] = useState(true);
   const [selectedAdhan, setSelectedAdhan] = useState('makkah');
-  const { location, error: locationError } = useLocation();
+  const [isManualLocation, setIsManualLocation] = useState(() => localStorage.getItem('isManualLocation') === 'true');
+  const [manualLocation, setManualLocation] = useState<{ latitude: number, longitude: number, city: string } | null>(() => {
+    const saved = localStorage.getItem('manualLocation');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const { location: gpsLocation, error: locationError } = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [lastAdhanPlayed, setLastAdhanPlayed] = useState<string | null>(null);
+
+  const activeLocation = isManualLocation ? manualLocation : gpsLocation;
 
   const adhanSounds: Record<string, string> = {
     makkah: 'https://www.islamcan.com/audio/adhan/azan1.mp3',
@@ -60,6 +68,14 @@ export default function App() {
   const isRTL = i18n.language === 'ar';
 
   useEffect(() => {
+    const handleChangeTab = (e: any) => {
+      setActiveTab(e.detail);
+    };
+    window.addEventListener('changeTab', handleChangeTab);
+    return () => window.removeEventListener('changeTab', handleChangeTab);
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -70,9 +86,9 @@ export default function App() {
   }, [isRTL, theme]);
 
   const prayerTimes = useMemo(() => {
-    if (!location) return null;
-    return getPrayerTimes(location.latitude, location.longitude, calcMethod, currentTime);
-  }, [location, calcMethod, currentTime]);
+    if (!activeLocation) return null;
+    return getPrayerTimes(activeLocation.latitude, activeLocation.longitude, calcMethod, currentTime);
+  }, [activeLocation, calcMethod, currentTime]);
 
   // Check for prayer times to play Adhan
   useEffect(() => {
@@ -143,14 +159,14 @@ export default function App() {
               <PrayerSection 
                 prayerTimes={prayerTimes} 
                 currentTime={currentTime} 
-                location={location} 
+                location={activeLocation} 
                 adhanEnabled={adhanEnabled}
               />
             )}
             {activeTab === 'quran' && <QuranSection />}
             {activeTab === 'tasbeeh' && <TasbeehSection />}
             {activeTab === 'athkar' && <AthkarSection />}
-            {activeTab === 'qibla' && <QiblaSection location={location} />}
+            {activeTab === 'qibla' && <QiblaSection location={activeLocation} />}
             {activeTab === 'settings' && (
               <SettingsSection 
                 calcMethod={calcMethod} 
@@ -160,6 +176,10 @@ export default function App() {
                 selectedAdhan={selectedAdhan}
                 setSelectedAdhan={setSelectedAdhan}
                 playAdhan={playAdhan}
+                isManualLocation={isManualLocation}
+                setIsManualLocation={setIsManualLocation}
+                manualLocation={manualLocation}
+                setManualLocation={setManualLocation}
               />
             )}
           </motion.div>
@@ -229,7 +249,15 @@ function PrayerSection({
         <div className="p-4 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full">
           <MapPin size={32} />
         </div>
-        <p className="text-sm font-semibold opacity-90">{t('errorLocation')}</p>
+        <p className="text-sm font-semibold opacity-90">
+          {t('errorLocation')}
+        </p>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'settings' }))}
+          className="text-emerald-600 font-bold text-sm underline"
+        >
+          {t('settings')}
+        </button>
       </div>
     );
   }
@@ -701,7 +729,11 @@ function SettingsSection({
   setAdhanEnabled, 
   selectedAdhan, 
   setSelectedAdhan, 
-  playAdhan 
+  playAdhan,
+  isManualLocation,
+  setIsManualLocation,
+  manualLocation,
+  setManualLocation
 }: { 
   calcMethod: CalculationMethodType, 
   setCalcMethod: (m: CalculationMethodType) => void,
@@ -709,9 +741,16 @@ function SettingsSection({
   setAdhanEnabled: (v: boolean) => void,
   selectedAdhan: string,
   setSelectedAdhan: (v: string) => void,
-  playAdhan: (s?: string) => void
+  playAdhan: (s?: string) => void,
+  isManualLocation: boolean,
+  setIsManualLocation: (v: boolean) => void,
+  manualLocation: any,
+  setManualLocation: (v: any) => void
 }) {
   const { t } = useTranslation();
+  const [cityInput, setCityInput] = useState(manualLocation?.city || '');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const adhanOptions = [
     { id: 'makkah', name: t('adhanMakkah') },
@@ -719,8 +758,98 @@ function SettingsSection({
     { id: 'calm', name: t('adhanCalm') },
   ];
 
+  const handleSearchCity = async () => {
+    if (!cityInput.trim()) return;
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityInput)}&limit=1`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        const newLocation = { latitude: parseFloat(lat), longitude: parseFloat(lon), city: display_name };
+        setManualLocation(newLocation);
+        localStorage.setItem('manualLocation', JSON.stringify(newLocation));
+        localStorage.setItem('isManualLocation', 'true');
+        setIsManualLocation(true);
+      } else {
+        setSearchError('City not found');
+      }
+    } catch (err) {
+      setSearchError('Error searching city');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const toggleManualLocation = (val: boolean) => {
+    setIsManualLocation(val);
+    localStorage.setItem('isManualLocation', val.toString());
+  };
+
   return (
     <div className="space-y-8">
+      {/* Location Settings */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 px-2">{t('location')}</h3>
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-black/10 dark:border-white/10 p-5 space-y-6 shadow-sm">
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{t('useGPS')}</span>
+            <button 
+              onClick={() => toggleManualLocation(false)}
+              className={cn(
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                !isManualLocation ? "border-emerald-500 bg-emerald-500" : "border-gray-300 dark:border-gray-700"
+              )}
+            >
+              {!isManualLocation && <div className="w-2 h-2 bg-white rounded-full" />}
+            </button>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">{t('manualLocation')}</span>
+              <button 
+                onClick={() => toggleManualLocation(true)}
+                className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                  isManualLocation ? "border-emerald-500 bg-emerald-500" : "border-gray-300 dark:border-gray-700"
+                )}
+              >
+                {isManualLocation && <div className="w-2 h-2 bg-white rounded-full" />}
+              </button>
+            </div>
+
+            {isManualLocation && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder={t('city')}
+                    className="w-full bg-gray-50 dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    value={cityInput}
+                    onChange={(e) => setCityInput(e.target.value)}
+                  />
+                </div>
+                <button 
+                  onClick={handleSearchCity}
+                  disabled={isSearching}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  {isSearching ? t('searching') : t('updateLocation')}
+                </button>
+                {searchError && <p className="text-xs text-red-500 px-1">{searchError}</p>}
+                {manualLocation && (
+                  <p className="text-[10px] opacity-60 px-1 truncate">
+                    {manualLocation.city}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Adhan Settings */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 px-2">{t('adhanSettings')}</h3>
