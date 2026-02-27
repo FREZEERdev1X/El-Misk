@@ -207,7 +207,7 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
       onClick={onClick}
       className={cn(
         "flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300",
-        active ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200"
+        active ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
       )}
     >
       {icon}
@@ -406,11 +406,11 @@ function QuranSection() {
 
         <div className="text-center mb-8">
           <h2 className="text-3xl font-serif font-bold mb-2">{selectedSurah.name}</h2>
-          <p className="text-sm opacity-50">{selectedSurah.englishName} • {selectedSurah.revelationType}</p>
+          <p className="text-sm font-bold opacity-80 dark:opacity-95">{selectedSurah.englishName} • {selectedSurah.revelationType}</p>
         </div>
 
         {loadingAyahs ? (
-          <div className="py-20 text-center opacity-50">{t('loading')}</div>
+          <div className="py-20 text-center opacity-70 dark:opacity-90">{t('loading')}</div>
         ) : (
           <div className="space-y-8">
             {selectedSurah.number !== 1 && selectedSurah.number !== 9 && (
@@ -448,7 +448,7 @@ function QuranSection() {
 
       <div className="grid gap-3">
         {loading ? (
-          <div className="py-10 text-center opacity-50">{t('loading')}</div>
+          <div className="py-10 text-center opacity-70 dark:opacity-90">{t('loading')}</div>
         ) : (
           filteredSurahs.map((surah) => (
             <button 
@@ -462,7 +462,7 @@ function QuranSection() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white">{i18n.language === 'ar' ? surah.name : surah.englishName}</h3>
-                  <p className="text-xs opacity-70 font-medium">{surah.englishNameTranslation} • {surah.numberOfAyahs} {t('ayahs')}</p>
+                  <p className="text-xs opacity-80 dark:opacity-95 font-medium">{surah.englishNameTranslation} • {surah.numberOfAyahs} {t('ayahs')}</p>
                 </div>
               </div>
               <div className="text-emerald-600 dark:text-emerald-400">
@@ -496,7 +496,7 @@ function TasbeehSection() {
   return (
     <div className="flex flex-col items-center justify-center py-10 gap-12">
       <div className="text-center">
-        <p className="text-sm font-bold opacity-70 mb-2">{t('total')}: {total}</p>
+        <p className="text-sm font-bold opacity-80 dark:opacity-95 mb-2">{t('total')}: {total}</p>
         <motion.div 
           key={count}
           initial={{ scale: 0.8, opacity: 0 }}
@@ -589,7 +589,7 @@ function ThikrCard({ thikr }: any) {
     >
       <p className="text-lg leading-relaxed mb-4 font-serif font-medium text-slate-900 dark:text-white">{thikr.text}</p>
       <div className="flex justify-between items-center">
-        <span className="text-xs opacity-70 font-bold">{thikr.reference}</span>
+        <span className="text-xs opacity-80 dark:opacity-95 font-bold">{thikr.reference}</span>
         <div className={cn(
           "w-10 h-10 rounded-xl flex items-center justify-center font-bold",
           isDone ? "bg-emerald-500 text-white" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
@@ -621,8 +621,8 @@ function PrayerLog({ prayerTimes }: { prayerTimes: any }) {
   const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-6 border border-black/5 dark:border-white/5 space-y-4">
-      <h3 className="text-sm font-bold uppercase tracking-wider opacity-50">{t('prayerTracker')}</h3>
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-6 border border-black/10 dark:border-white/10 space-y-4 shadow-sm">
+      <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 dark:opacity-90">{t('prayerTracker')}</h3>
       <div className="flex justify-between gap-2">
         {prayers.map((p) => {
           const isDone = log[`${today}-${p}`];
@@ -634,7 +634,7 @@ function PrayerLog({ prayerTimes }: { prayerTimes: any }) {
                 "flex-1 flex flex-col items-center gap-2 p-3 rounded-2xl transition-all border",
                 isDone 
                   ? "bg-emerald-500 border-emerald-500 text-white" 
-                  : "bg-gray-50 dark:bg-black/20 border-black/10 dark:border-white/10 text-slate-500 dark:text-gray-400"
+                  : "bg-gray-50 dark:bg-black/20 border-black/10 dark:border-white/10 text-slate-500 dark:text-slate-300"
               )}
             >
               <div className={cn(
@@ -687,7 +687,7 @@ function QiblaSection({ location }: { location: any }) {
     <div className="flex flex-col items-center justify-center py-10 gap-12">
       <div className="text-center">
         <h2 className="text-2xl font-extrabold mb-2">{t('qibla')}</h2>
-        <p className="text-sm font-medium opacity-70">{t('rotatePhone')}</p>
+        <p className="text-sm font-medium opacity-80 dark:opacity-95">{t('rotatePhone')}</p>
       </div>
 
       <div className="relative w-64 h-64">
@@ -791,7 +791,7 @@ function SettingsSection({
     <div className="space-y-8">
       {/* Location Settings */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 px-2">{t('location')}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider opacity-80 dark:opacity-95 px-2">{t('location')}</h3>
         <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-black/10 dark:border-white/10 p-5 space-y-6 shadow-sm">
           <div className="flex justify-between items-center">
             <span className="font-medium">{t('useGPS')}</span>
@@ -852,7 +852,7 @@ function SettingsSection({
 
       {/* Adhan Settings */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 px-2">{t('adhanSettings')}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider opacity-80 dark:opacity-95 px-2">{t('adhanSettings')}</h3>
         <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-black/10 dark:border-white/10 p-5 space-y-6 shadow-sm">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -906,7 +906,7 @@ function SettingsSection({
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider opacity-70 px-2">{t('calculationMethod')}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider opacity-80 dark:opacity-95 px-2">{t('calculationMethod')}</h3>
         <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-black/10 dark:border-white/10 overflow-hidden shadow-sm">
           {calculationMethods.map((method) => (
             <button 
